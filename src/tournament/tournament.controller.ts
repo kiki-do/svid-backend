@@ -17,7 +17,7 @@ export class TournamentController {
   }
 
   @Get(':id/statistics')
-  async getStatistics(@Param('id') id: number) {
+  async getStatistics(@Param('id') id: string) {
     return this.tournamentService.getTournamentStatistics(id);
   }
 }

@@ -8,7 +8,7 @@ export class MatchService {
 
   async createMatch(dto: MatchDto) {
     const player = await this.prisma.player.findUnique({
-      where: { id: +dto.playerId },
+      where: { id: dto.playerId },
       include: { statistics: true },
     });
 
@@ -75,7 +75,7 @@ export class MatchService {
     return match;
   }
 
-  async getMatchesByTournament(tournamentId: number) {
+  async getMatchesByTournament(tournamentId: string) {
     return this.prisma.match.findMany({
       where: { tournamentId },
       include: { player: true, tournament: true },

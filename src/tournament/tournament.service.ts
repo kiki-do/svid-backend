@@ -25,7 +25,7 @@ export class TournamentService {
     });
   }
 
-  async getTournamentStatistics(tournamentId: number) {
+  async getTournamentStatistics(tournamentId: string) {
     const matches = await this.prisma.match.findMany({
       where: { tournamentId },
       include: { player: true, statistics: true },

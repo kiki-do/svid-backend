@@ -8,32 +8,33 @@ datasource db {
 }
 
 model Admin {
-  id       Int    @id @default(autoincrement())
+  id       String @id @default(uuid())
   login    String @unique
   password String
 }
 
 model Player {
-  id           Int         @id @default(autoincrement())
+  id           String      @id @default(uuid())
   password     String
   nickname     String      @unique
   firstName    String?
   lastName     String?
   socials      String[]
   statistics   Statistics? @relation(fields: [statisticsId], references: [id])
-  statisticsId Int?
+  statisticsId String?
   matches      Match[]
 
   @@map("players")
 }
 
 model Statistics {
-  id         Int      @id @default(autoincrement())
+  id         String   @id @default(uuid())
   kills      Int
   deaths     Int
   assists    Int
   mapCount   Int
   place      Int
+  winrate    Int
   win        Int
   lose       Int
   kd         Float
@@ -45,7 +46,7 @@ model Statistics {
 }
 
 model Tournament {
-  id         Int                    @id @default(autoincrement())
+  id         String                 @id @default(uuid())
   name       String
   image      String?
   date       DateTime
@@ -54,23 +55,23 @@ model Tournament {
 }
 
 model Match {
-  id           Int               @id @default(autoincrement())
+  id           String            @id @default(uuid())
   kills        Int
   deaths       Int
   assists      Int
   mvp          Int
   place        Int
   map          String
-  playerId     Int
+  playerId     String
   player       Player            @relation(fields: [playerId], references: [id])
-  tournamentId Int
+  tournamentId String
   tournament   Tournament        @relation(fields: [tournamentId], references: [id])
   win          Boolean
   statistics   MatchStatistics[]
 }
 
 model TournamentStatistics {
-  id           Int        @id @default(autoincrement())
+  id           String     @id @default(uuid())
   kills        Int
   deaths       Int
   assists      Int
@@ -82,12 +83,12 @@ model TournamentStatistics {
   kda          Float
   svidRating   Float
   mvp          Int
-  tournamentId Int
+  tournamentId String
   tournament   Tournament @relation(fields: [tournamentId], references: [id])
 }
 
 model MatchStatistics {
-  id      Int     @id @default(autoincrement())
+  id      String  @id @default(uuid())
   kills   Int
   deaths  Int
   assists Int
@@ -95,6 +96,6 @@ model MatchStatistics {
   kda     Float
   mvp     Int
   win     Boolean
-  matchId Int
+  matchId String
   match   Match   @relation(fields: [matchId], references: [id])
 }

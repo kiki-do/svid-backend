@@ -1,7 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { hash } from 'argon2';
 import { PrismaService } from 'src/prisma.service';
-import { AuthDto } from './dto/auth.dto';
 
 @Injectable()
 export class UserService {
@@ -19,7 +17,7 @@ export class UserService {
     });
   }
 
-  async getById(id: number) {
+  async getById(id: string) {
     return this.prisma.admin.findUnique({
       where: {
         id,
@@ -27,17 +25,17 @@ export class UserService {
     });
   }
 
-  async create(dto: AuthDto) {
-    const admins = await this.getAllAdmins();
-    const admin = {
-      id: admins.length + 1,
-      login: dto.login,
-      name: dto.name,
-      password: await hash(dto.password),
-    };
+  // async create(dto: AuthDto) {
+  //   const admins = await this.getAllAdmins();
+  //   const admin = {
+  //     id: admins.length + 1,
+  //     login: dto.login,
+  //     name: dto.name,
+  //     password: await hash(dto.password),
+  //   };
 
-    return this.prisma.admin.create({
-      data: admin,
-    });
-  }
+  //   return this.prisma.admin.create({
+  //     data: admin,
+  //   });
+  // }
 }

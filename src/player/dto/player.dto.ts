@@ -1,4 +1,4 @@
-import { IsArray, IsNumber, IsString } from 'class-validator';
+import { IsArray, IsNumber, IsOptional, IsString } from 'class-validator';
 
 export class PlayerDto {
   @IsString()
@@ -7,24 +7,6 @@ export class PlayerDto {
   @IsString()
   password: string;
 
-  @IsNumber()
-  kills: number;
-
-  @IsNumber()
-  deaths: number;
-
-  @IsNumber()
-  assists: number;
-
-  @IsNumber()
-  place: number;
-
-  @IsArray()
-  maps: string[];
-
-  @IsNumber()
-  mapCount: number;
-
   @IsString()
   firstName: string;
 
@@ -32,26 +14,58 @@ export class PlayerDto {
   lastName: string;
 
   @IsArray()
-  socials: string[];
+  @IsOptional()
+  socials?: string[];
 
   @IsNumber()
-  win: number;
+  @IsOptional()
+  kills?: number;
 
   @IsNumber()
-  lose: number;
+  @IsOptional()
+  deaths?: number;
 
   @IsNumber()
-  winrate: number;
+  @IsOptional()
+  assists?: number;
 
   @IsNumber()
-  kd: number;
+  @IsOptional()
+  place?: number;
+
+  @IsArray()
+  @IsOptional()
+  maps?: string[];
 
   @IsNumber()
-  kda: number;
+  @IsOptional()
+  mapCount?: number;
 
   @IsNumber()
-  svidRating: number;
+  @IsOptional()
+  win?: number;
 
   @IsNumber()
-  mvp: number;
+  @IsOptional()
+  lose?: number;
+
+  @IsNumber()
+  @IsOptional()
+  winrate?: number;
+
+  @IsNumber()
+  @IsOptional()
+  kd?: number;
+
+  @IsNumber()
+  @IsOptional()
+  kda?: number;
+
+  @IsNumber()
+  @IsOptional()
+  svidRating?: number;
+
+  @IsNumber()
+  @IsOptional()
+  mvp?: number;
 }

@@ -4,6 +4,7 @@ import {
   Delete,
   Get,
   Param,
+  Patch,
   Post,
   Put,
 } from '@nestjs/common';
@@ -27,26 +28,26 @@ export class PlayerController {
   }
 
   @Auth()
-  @Put(':id')
-  async update(@Param('id') id: number, @Body() dto: PlayerDto) {
+  @Patch(':id')
+  async update(@Param('id') id: string, @Body() dto: PlayerDto) {
     return this.playerService.updatePlayer(id, dto);
   }
 
   @Auth()
   @Delete(':id')
-  async delete(@Param('id') id: number) {
+  async delete(@Param('id') id: string) {
     return this.playerService.deletePlayer(id);
   }
 
   @Auth()
   @Post(':id/statistics')
-  async createStatistics(@Param('id') id: number, @Body() dto: PlayerDto) {
+  async createStatistics(@Param('id') id: string, @Body() dto: PlayerDto) {
     return this.playerService.createStatistics(id, dto);
   }
 
   @Auth()
   @Put(':id/statistics')
-  async updateStatistics(@Param('id') id: number, @Body() dto: PlayerDto) {
+  async updateStatistics(@Param('id') id: string, @Body() dto: PlayerDto) {
     return this.playerService.updateStatistics(id, dto);
   }
 }

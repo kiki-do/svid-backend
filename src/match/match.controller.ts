@@ -12,7 +12,7 @@ export class MatchController {
   }
 
   @Get('tournament/:id')
-  async findByTournament(@Param('id') id: number) {
+  async findByTournament(@Param('id') id: string) {
     return this.matchService.getMatchesByTournament(id);
   }
 }

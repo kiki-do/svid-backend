@@ -19,11 +19,11 @@ export class MatchDto {
   @IsString()
   map: string;
 
-  @IsNumber()
-  playerId: number;
+  @IsString()
+  playerId: string;
 
-  @IsNumber()
-  tournamentId: number;
+  @IsString()
+  tournamentId: string;
 
   @IsBoolean()
   win: boolean;

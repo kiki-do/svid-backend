@@ -33,12 +33,46 @@ export class AuthService {
       where: { login: dto.login },
     });
 
-    if (!admin) throw new NotFoundException('Admin not found');
+    if (!admin) throw new BadRequestException('Admin not found');
 
     const isValid = await verify(admin.password, dto.password);
     if (!isValid) throw new UnauthorizedException('Invalid password');
 
     return this.issueTokens(admin.id, 'admin');
+  }
+
+  async adminRegister(dto: AdminAuthDto) {
+    const existingUser = await this.prisma.admin.findUnique({
+      where: { login: dto.login },
+    });
+    if (existingUser) throw new BadRequestException('Login already exists');
+
+    const hashedPassword = await hash(dto.password);
+
+    const user = await this.prisma.admin.create({
+      data: {
+        password: hashedPassword,
+        login: dto.login,
+      },
+    });
+
+    return this.issueTokens(user.id, 'admin');
+  }
+
+  async adminInfo(id: string) {
+    const admin = await this.prisma.admin.findUnique({
+      where: { id },
+      select: {
+        id: true,
+        login: true,
+      },
+    });
+
+    if (!admin) {
+      throw new NotFoundException('Admin not found');
+    }
+
+    return admin;
   }
 
   async login(dto: AuthDto) {
@@ -63,7 +97,22 @@ export class AuthService {
 
     return this.issueTokens(user.id, 'user');
   }
-  private issueTokens(userId: number, role: 'user' | 'admin') {
+
+  async getNewTokens(refreshToken: string) {
+    const result = await this.jwt.verifyAsync(refreshToken);
+    if (result.role === 'user') {
+      return this.issueTokens(result.id, 'user');
+    }
+  }
+
+  async getNewAdminTokens(refreshToken: string) {
+    const result = await this.jwt.verifyAsync(refreshToken);
+    if (result.role === 'admin') {
+      return this.issueTokens(result.id, 'admin');
+    }
+  }
+
+  private issueTokens(userId: string, role: 'user' | 'admin') {
     const payload = {
       id: userId,
       role: role,
