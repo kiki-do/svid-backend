@@ -6,10 +6,9 @@ import {
   Param,
   Patch,
   Post,
-  Put,
 } from '@nestjs/common';
 import { Auth } from '../auth/decorators/auth.decorator';
-import { PlayerDto } from './dto/player.dto';
+import { PlayerDto, PlayerStatisticsDto } from './dto/player.dto';
 import { PlayerService } from './player.service';
 
 @Controller('players')
@@ -29,7 +28,7 @@ export class PlayerController {
 
   @Auth()
   @Patch(':id')
-  async update(@Param('id') id: string, @Body() dto: PlayerDto) {
+  async update(@Param('id') id: string, @Body() dto: Partial<PlayerDto>) {
     return this.playerService.updatePlayer(id, dto);
   }
 
@@ -41,13 +40,19 @@ export class PlayerController {
 
   @Auth()
   @Post(':id/statistics')
-  async createStatistics(@Param('id') id: string, @Body() dto: PlayerDto) {
+  async createStatistics(
+    @Param('id') id: string,
+    @Body() dto: PlayerStatisticsDto,
+  ) {
     return this.playerService.createStatistics(id, dto);
   }
 
   @Auth()
-  @Put(':id/statistics')
-  async updateStatistics(@Param('id') id: string, @Body() dto: PlayerDto) {
+  @Patch(':id/statistics')
+  async updateStatistics(
+    @Param('id') id: string,
+    @Body() dto: PlayerStatisticsDto,
+  ) {
     return this.playerService.updateStatistics(id, dto);
   }
 }

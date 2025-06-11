@@ -26,3 +26,9 @@ export class AdminAuthDto {
   @IsNotEmpty()
   password: string;
 }
+
+export class LogoutDto {
+  @IsString()
+  @IsNotEmpty()
+  refreshToken: string;
+}

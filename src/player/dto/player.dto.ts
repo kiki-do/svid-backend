@@ -16,7 +16,9 @@ export class PlayerDto {
   @IsArray()
   @IsOptional()
   socials?: string[];
+}
 
+export class PlayerStatisticsDto {
   @IsNumber()
   @IsOptional()
   kills?: number;

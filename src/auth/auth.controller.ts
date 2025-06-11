@@ -54,4 +54,12 @@ export class AuthController {
   async adminInfo(@CurrentUser('id') id: string) {
     return this.authService.adminInfo(id);
   }
+
+  @AdminOnly()
+  @Auth()
+  @Post('admin/logout')
+  @HttpCode(200)
+  async adminLogout() {
+    return this.authService.adminLogout();
+  }
 }

@@ -98,6 +98,10 @@ export class AuthService {
     return this.issueTokens(user.id, 'user');
   }
 
+  async adminLogout() {
+    return { success: true };
+  }
+
   async getNewTokens(refreshToken: string) {
     const result = await this.jwt.verifyAsync(refreshToken);
     if (result.role === 'user') {
