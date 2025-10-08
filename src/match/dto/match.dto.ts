@@ -1,6 +1,21 @@
-import { IsBoolean, IsNumber, IsString } from 'class-validator';
+import {
+  IsString,
+  IsUUID,
+  IsArray,
+  ValidateNested,
+  IsOptional,
+  IsNumber,
+  IsBoolean,
+} from 'class-validator';
+import { Type } from 'class-transformer';
 
-export class MatchDto {
+export class PlayerStatDto {
+  @IsUUID()
+  playerId: string;
+
+  @IsUUID()
+  teamId: string;
+
   @IsNumber()
   kills: number;
 
@@ -14,17 +29,32 @@ export class MatchDto {
   mvp: number;
 
   @IsNumber()
+  score: number;
+
+  @IsNumber()
   place: number;
-
-  @IsString()
-  map: string;
-
-  @IsString()
-  playerId: string;
-
-  @IsString()
-  tournamentId: string;
 
   @IsBoolean()
   win: boolean;
+}
+
+export class MatchDto {
+  @IsString()
+  map: string;
+
+  @IsUUID()
+  tournamentId: string;
+
+  @IsUUID()
+  @IsOptional()
+  winningTeamId?: string;
+
+  @IsUUID()
+  @IsOptional()
+  losingTeamId?: string;
+
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => PlayerStatDto)
+  players: PlayerStatDto[];
 }

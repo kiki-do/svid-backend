@@ -5,5 +5,4 @@
 
 */
 -- AlterTable
-ALTER TABLE "Tournament" ADD COLUMN     "date" TIMESTAMP(3) NOT NULL,
-ADD COLUMN     "image" TEXT;
+ALTER TABLE "Tournament" ADD COLUMN     "date" TIMESTAMP(3) NOT NULL;

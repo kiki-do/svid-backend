@@ -4,6 +4,7 @@ import { AuthModule } from './auth/auth.module';
 import { PlayerModule } from './player/player.module';
 import { TournamentModule } from './tournament/tournament.module';
 import { MatchModule } from './match/match.module';
+import { TeamModule } from './team/team.module';
 
 @Module({
   imports: [
@@ -12,6 +13,7 @@ import { MatchModule } from './match/match.module';
     PlayerModule,
     TournamentModule,
     MatchModule,
+    TeamModule,
   ],
 })
 export class AppModule {}

@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from 'src/prisma.service';
 import { TournamentDto } from './dto/tournament.dto';
 
@@ -25,54 +25,92 @@ export class TournamentService {
     });
   }
 
+  async getTournamentById(id: string) {
+    const tournament = await this.prisma.tournament.findUnique({
+      where: { id },
+      include: {
+        matches: {
+          include: {
+            statistics: {
+              include: {
+                player: true,
+              },
+            },
+          },
+        },
+        teams: {
+          include: {
+            members: {
+              include: {
+                player: true,
+              },
+            },
+          },
+        },
+      },
+    });
+
+    if (!tournament) {
+      throw new NotFoundException('Турнир не найден');
+    }
+
+    return tournament;
+  }
+
+  async updateTournament(id: string, dto: TournamentDto) {
+    const tournament = await this.prisma.tournament.findUnique({
+      where: { id },
+    });
+    if (!tournament) throw new NotFoundException('Турнир не найден');
+
+    return this.prisma.tournament.update({
+      where: { id },
+      data: {
+        name: dto.name,
+        image: dto.image,
+        date: new Date(dto.date),
+      },
+    });
+  }
+
+  async deleteTournament(id: string) {
+    const tournament = await this.prisma.tournament.findUnique({
+      where: { id },
+    });
+    if (!tournament) throw new NotFoundException('Турнир не найден');
+
+    return this.prisma.tournament.delete({ where: { id } });
+  }
+
   async getTournamentStatistics(tournamentId: string) {
     const matches = await this.prisma.match.findMany({
       where: { tournamentId },
-      include: { player: true, statistics: true },
+      include: {
+        statistics: true,
+      },
     });
 
     let totalKills = 0;
     let totalDeaths = 0;
     let totalAssists = 0;
     let totalMVP = 0;
-    let totalPlace = 0;
-    let totalWins = 0;
+    const totalWins = 0;
 
-    matches.forEach((match) => {
-      totalKills += match.kills;
-      totalDeaths += match.deaths;
-      totalAssists += match.assists;
-      totalMVP += match.mvp;
-      totalPlace += match.place;
-      totalWins += match.win ? 1 : 0;
-    });
+    for (const match of matches) {
+      for (const stat of match.statistics) {
+        totalKills += stat.kills;
+        totalDeaths += stat.deaths;
+        totalAssists += stat.assists;
+        totalMVP += stat.mvp;
+      }
+    }
 
     const KD = totalDeaths > 0 ? totalKills / totalDeaths : totalKills;
     const KDA =
       totalDeaths > 0
         ? (totalKills + totalAssists) / totalDeaths
         : totalKills + totalAssists;
-    const svidRating =
-      KD +
-      (totalMVP / matches.length) * 0.05 -
-      (totalPlace / matches.length) * 0.02;
-
-    await this.prisma.tournamentStatistics.create({
-      data: {
-        kills: totalKills,
-        deaths: totalDeaths,
-        assists: totalAssists,
-        mapCount: matches.length,
-        place: totalPlace,
-        win: totalWins,
-        lose: matches.length - totalWins,
-        kd: Number(KD.toFixed(2)),
-        kda: Number(KDA.toFixed(2)),
-        svidRating: Number(KD.toFixed(2)),
-        mvp: totalMVP,
-        tournamentId: tournamentId,
-      },
-    });
+    const svidRating = KD + (totalMVP / matches.length) * 0.05;
 
     return {
       totalKills,

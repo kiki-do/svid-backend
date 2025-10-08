@@ -8,8 +8,9 @@ import {
   Post,
 } from '@nestjs/common';
 import { Auth } from '../auth/decorators/auth.decorator';
-import { PlayerDto, PlayerStatisticsDto } from './dto/player.dto';
+import { PlayerDto } from './dto/player.dto';
 import { PlayerService } from './player.service';
+import { PlayerStatisticsDto } from './dto/player-statistics.dto';
 
 @Controller('players')
 export class PlayerController {

@@ -13,89 +13,94 @@ model Admin {
   password String
 }
 
-model Player {
-  id           String      @id @default(uuid())
-  password     String
-  nickname     String      @unique
-  firstName    String?
-  lastName     String?
-  socials      String[]
-  statistics   Statistics? @relation(fields: [statisticsId], references: [id])
-  statisticsId String?
-  matches      Match[]
-
-  @@map("players")
-}
-
-model Statistics {
-  id         String   @id @default(uuid())
-  kills      Int
-  deaths     Int
-  assists    Int
-  mapCount   Int
-  place      Int
-  winrate    Int
-  win        Int
-  lose       Int
-  kd         Float
-  kda        Float
-  svidRating Float
-  mvp        Int
-  maps       String[]
-  Player     Player[]
-}
-
 model Tournament {
-  id         String                 @id @default(uuid())
-  name       String
-  image      String?
-  date       DateTime
-  matches    Match[]
-  statistics TournamentStatistics[]
+  id      String   @id @default(uuid())
+  name    String
+  format  String // '2x2' или '5x5'
+  image   String?
+  date    DateTime
+  teams   Team[]
+  matches Match[]
+}
+
+model Team {
+  id                    String                  @id @default(uuid())
+  name                  String?
+  tournamentId          String
+  tournament            Tournament              @relation(fields: [tournamentId], references: [id])
+  members               PlayerOnTeam[]
+  matchesWon            Match[]                 @relation("WinningTeamMatches")
+  matchesLost           Match[]                 @relation("LosingTeamMatches")
+  PlayerMatchStatistics PlayerMatchStatistics[]
+}
+
+model PlayerOnTeam {
+  id       String @id @default(uuid())
+  player   Player @relation(fields: [playerId], references: [id])
+  playerId String
+  team     Team   @relation(fields: [teamId], references: [id])
+  teamId   String
+
+  @@unique([playerId, teamId])
+}
+
+model Player {
+  id         String                  @id @default(uuid())
+  nickname   String                  @unique
+  firstName  String
+  lastName   String
+  password   String
+  teams      PlayerOnTeam[]
+  matchStats PlayerMatchStatistics[]
+  statistics PlayerStatistics?       @relation("PlayerToStatistics")
+}
+
+model PlayerStatistics {
+  id         String @id @default(uuid())
+  player     Player @relation("PlayerToStatistics", fields: [playerId], references: [id])
+  playerId   String @unique
+  kills      Int    @default(0)
+  deaths     Int    @default(0)
+  assists    Int    @default(0)
+  win        Int    @default(0)
+  lose       Int    @default(0)
+  kd         Float  @default(0)
+  kda        Float  @default(0)
+  mapCount   Int    @default(0)
+  svidRating Float  @default(0)
+  winrate    Int    @default(0)
+
+  place Int      @default(0)
+  mvp   Int      @default(0)
+  maps  String[] @default([])
 }
 
 model Match {
-  id           String            @id @default(uuid())
-  kills        Int
-  deaths       Int
-  assists      Int
-  mvp          Int
-  place        Int
-  map          String
-  playerId     String
-  player       Player            @relation(fields: [playerId], references: [id])
-  tournamentId String
-  tournament   Tournament        @relation(fields: [tournamentId], references: [id])
-  win          Boolean
-  statistics   MatchStatistics[]
+  id            String                  @id @default(uuid())
+  map           String
+  tournamentId  String
+  tournament    Tournament              @relation(fields: [tournamentId], references: [id])
+  winningTeamId String?
+  winningTeam   Team?                   @relation("WinningTeamMatches", fields: [winningTeamId], references: [id])
+  losingTeamId  String?
+  losingTeam    Team?                   @relation("LosingTeamMatches", fields: [losingTeamId], references: [id])
+  statistics    PlayerMatchStatistics[]
 }
 
-model TournamentStatistics {
-  id           String     @id @default(uuid())
-  kills        Int
-  deaths       Int
-  assists      Int
-  mapCount     Int
-  place        Int
-  win          Int
-  lose         Int
-  kd           Float
-  kda          Float
-  svidRating   Float
-  mvp          Int
-  tournamentId String
-  tournament   Tournament @relation(fields: [tournamentId], references: [id])
-}
+model PlayerMatchStatistics {
+  id      String @id @default(uuid())
+  match   Match  @relation(fields: [matchId], references: [id])
+  matchId String
 
-model MatchStatistics {
-  id      String  @id @default(uuid())
+  player   Player @relation(fields: [playerId], references: [id])
+  playerId String
+
+  team   Team   @relation(fields: [teamId], references: [id])
+  teamId String
+
   kills   Int
   deaths  Int
   assists Int
-  kd      Float
-  kda     Float
   mvp     Int
-  win     Boolean
-  matchId String
-  match   Match   @relation(fields: [matchId], references: [id])
+  score   Int
 }

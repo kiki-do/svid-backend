@@ -16,5 +16,5 @@ export class TournamentDto {
 
   @IsDateString()
   @IsNotEmpty()
-  date: Date;
+  date: string;
 }

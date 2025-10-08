@@ -1,73 +1,19 @@
-import { IsArray, IsNumber, IsOptional, IsString } from 'class-validator';
+import { IsString, IsNotEmpty, MinLength } from 'class-validator';
 
 export class PlayerDto {
   @IsString()
+  @IsNotEmpty()
   nickname: string;
 
   @IsString()
-  password: string;
-
-  @IsString()
+  @IsNotEmpty()
   firstName: string;
 
   @IsString()
+  @IsNotEmpty()
   lastName: string;
 
-  @IsArray()
-  @IsOptional()
-  socials?: string[];
-}
-
-export class PlayerStatisticsDto {
-  @IsNumber()
-  @IsOptional()
-  kills?: number;
-
-  @IsNumber()
-  @IsOptional()
-  deaths?: number;
-
-  @IsNumber()
-  @IsOptional()
-  assists?: number;
-
-  @IsNumber()
-  @IsOptional()
-  place?: number;
-
-  @IsArray()
-  @IsOptional()
-  maps?: string[];
-
-  @IsNumber()
-  @IsOptional()
-  mapCount?: number;
-
-  @IsNumber()
-  @IsOptional()
-  win?: number;
-
-  @IsNumber()
-  @IsOptional()
-  lose?: number;
-
-  @IsNumber()
-  @IsOptional()
-  winrate?: number;
-
-  @IsNumber()
-  @IsOptional()
-  kd?: number;
-
-  @IsNumber()
-  @IsOptional()
-  kda?: number;
-
-  @IsNumber()
-  @IsOptional()
-  svidRating?: number;
-
-  @IsNumber()
-  @IsOptional()
-  mvp?: number;
+  @IsString()
+  @MinLength(6, { message: 'Пароль должен содержать минимум 6 символов' })
+  password: string;
 }

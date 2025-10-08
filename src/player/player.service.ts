@@ -1,7 +1,8 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { PrismaService } from 'src/prisma.service';
-import { PlayerDto, PlayerStatisticsDto } from './dto/player.dto';
+import { PlayerDto } from './dto/player.dto';
 import { hash } from 'argon2';
+import { PlayerStatisticsDto } from './dto/player-statistics.dto';
 
 @Injectable()
 export class PlayerService {
@@ -14,7 +15,6 @@ export class PlayerService {
         nickname: true,
         firstName: true,
         lastName: true,
-        socials: true,
         statistics: true,
       },
     });
@@ -29,29 +29,26 @@ export class PlayerService {
       throw new BadRequestException('Игрок с таким nickname уже существует.');
     }
 
-    if (!dto.nickname || !dto.firstName || !dto.lastName) {
+    if (!dto.nickname || !dto.firstName || !dto.lastName || !dto.password) {
       throw new BadRequestException(
-        'Nickname, firstName и lastName обязательны для заполнения.',
+        'Nickname, firstName, lastName и password обязательны.',
       );
     }
 
     const hashedPassword = await hash(dto.password);
 
-    // Создаем игрока с дефолтной статистикой (все нули)
-    return this.prisma.player.create({
+    const player = await this.prisma.player.create({
       data: {
         nickname: dto.nickname,
-        password: hashedPassword,
         firstName: dto.firstName,
         lastName: dto.lastName,
-        socials: dto.socials ?? [],
+        password: hashedPassword,
         statistics: {
           create: {
             kills: 0,
             deaths: 0,
             assists: 0,
             place: 0,
-            maps: [],
             mapCount: 0,
             win: 0,
             lose: 0,
@@ -60,13 +57,20 @@ export class PlayerService {
             kda: 0,
             svidRating: 0,
             mvp: 0,
+            maps: [],
           },
         },
       },
-      include: {
+      select: {
+        id: true,
+        nickname: true,
+        firstName: true,
+        lastName: true,
         statistics: true,
       },
     });
+
+    return player;
   }
 
   async updatePlayer(id: string, dto: Partial<PlayerDto>) {
@@ -79,21 +83,13 @@ export class PlayerService {
       throw new BadRequestException('Игрок с указанным ID не найден');
     }
 
-    const playerData: Partial<{
-      nickname: string;
-      firstName: string;
-      lastName: string;
-      socials: string[];
-    }> = {};
-
-    if (dto.nickname !== undefined) playerData.nickname = dto.nickname;
-    if (dto.firstName !== undefined) playerData.firstName = dto.firstName;
-    if (dto.lastName !== undefined) playerData.lastName = dto.lastName;
-    if (dto.socials !== undefined) playerData.socials = dto.socials;
-
     return this.prisma.player.update({
       where: { id },
-      data: playerData,
+      data: {
+        nickname: dto.nickname,
+        firstName: dto.firstName,
+        lastName: dto.lastName,
+      },
       include: {
         statistics: true,
       },
@@ -107,85 +103,6 @@ export class PlayerService {
   }
 
   async createStatistics(playerId: string, data: PlayerStatisticsDto) {
-    // Проверяем существование игрока
-    const player = await this.prisma.player.findUnique({
-      where: { id: playerId },
-    });
-
-    if (!player) {
-      throw new BadRequestException('Игрок с указанным ID не найден');
-    }
-
-    if (player.statisticsId) {
-      throw new BadRequestException('У игрока уже есть статистика');
-    }
-
-    // Валидация обязательных полей
-    if (
-      data.kills === undefined ||
-      data.deaths === undefined ||
-      data.assists === undefined ||
-      data.mapCount === undefined ||
-      data.win === undefined ||
-      data.lose === undefined ||
-      data.place === undefined ||
-      data.mvp === undefined
-    ) {
-      throw new BadRequestException(
-        'Все основные поля статистики обязательны для заполнения',
-      );
-    }
-
-    // Проверка на отрицательные значения
-    if (
-      data.kills < 0 ||
-      data.deaths < 0 ||
-      data.assists < 0 ||
-      data.mapCount < 0 ||
-      data.win < 0 ||
-      data.lose < 0 ||
-      data.place < 0 ||
-      data.mvp < 0
-    ) {
-      throw new BadRequestException(
-        'Значения статистики не могут быть отрицательными',
-      );
-    }
-
-    // Проверка maps (если передано)
-    if (data.maps && !Array.isArray(data.maps)) {
-      throw new BadRequestException('Поле maps должно быть массивом');
-    }
-
-    const WINRATE = data.win / data.mapCount;
-    const KD = data.deaths > 0 ? data.kills / data.deaths : data.kills;
-    const KDA =
-      data.deaths > 0
-        ? (data.kills + data.assists) / data.deaths
-        : data.kills + data.assists;
-    const svidRating = KD + WINRATE * 0.2 + data.mvp * 0.05 - data.place * 0.02;
-
-    return this.prisma.statistics.create({
-      data: {
-        kills: data.kills,
-        deaths: data.deaths,
-        assists: data.assists,
-        mapCount: data.mapCount,
-        maps: data.maps || [],
-        kd: Number(KD.toFixed(2)),
-        kda: Number(KDA.toFixed(2)),
-        winrate: Number(WINRATE.toFixed(2)),
-        mvp: data.mvp,
-        svidRating: Number(svidRating.toFixed(2)),
-        win: data.win,
-        lose: data.lose,
-        place: data.place,
-        Player: { connect: { id: playerId } },
-      },
-    });
-  }
-
-  async updateStatistics(playerId: string, data: PlayerStatisticsDto) {
     const player = await this.prisma.player.findUnique({
       where: { id: playerId },
       include: { statistics: true },
@@ -195,71 +112,86 @@ export class PlayerService {
       throw new BadRequestException('Игрок с указанным ID не найден');
     }
 
-    if (!player.statistics) {
-      throw new BadRequestException('У игрока нет статистики для обновления');
+    if (player.statistics) {
+      throw new BadRequestException('У игрока уже есть статистика');
     }
 
-    if (
-      (data.kills !== undefined && data.kills < 0) ||
-      (data.deaths !== undefined && data.deaths < 0) ||
-      (data.assists !== undefined && data.assists < 0) ||
-      (data.mapCount !== undefined && data.mapCount < 0) ||
-      (data.win !== undefined && data.win < 0) ||
-      (data.lose !== undefined && data.lose < 0) ||
-      (data.place !== undefined && data.place < 0) ||
-      (data.mvp !== undefined && data.mvp < 0)
-    ) {
-      throw new BadRequestException(
-        'Значения статистики не могут быть отрицательными',
-      );
+    const WINRATE = data.mapCount > 0 ? data.win / data.mapCount : 0;
+    const KD = data.deaths > 0 ? data.kills / data.deaths : data.kills;
+    const KDA =
+      data.deaths > 0
+        ? (data.kills + data.assists) / data.deaths
+        : data.kills + data.assists;
+    const svidRating = KD + WINRATE * 0.2 + data.mvp * 0.05 - data.place * 0.02;
+
+    return this.prisma.playerStatistics.create({
+      data: {
+        player: { connect: { id: playerId } },
+        kills: data.kills,
+        deaths: data.deaths,
+        assists: data.assists,
+        win: data.win,
+        lose: data.lose,
+        kd: Number(KD.toFixed(2)),
+        kda: Number(KDA.toFixed(2)),
+        mapCount: data.mapCount,
+        winrate: Number(WINRATE.toFixed(2)),
+        svidRating: Number(svidRating.toFixed(2)),
+        place: data.place,
+        mvp: data.mvp,
+        maps: data.maps ?? [],
+      },
+    });
+  }
+
+  async updateStatistics(playerId: string, data: Partial<PlayerStatisticsDto>) {
+    const player = await this.prisma.player.findUnique({
+      where: { id: playerId },
+      include: { statistics: true },
+    });
+
+    if (!player || !player.statistics) {
+      throw new BadRequestException('Игрок или его статистика не найдены');
     }
 
-    // Проверка maps (если передано)
-    if (data.maps && !Array.isArray(data.maps)) {
-      throw new BadRequestException('Поле maps должно быть массивом');
-    }
-
-    // Берем текущие значения для не переданных полей
-    const currentStats = {
+    const current = {
       kills: data.kills ?? player.statistics.kills,
       deaths: data.deaths ?? player.statistics.deaths,
       assists: data.assists ?? player.statistics.assists,
-      mapCount: data.mapCount ?? player.statistics.mapCount,
-      maps: data.maps ?? player.statistics.maps,
       win: data.win ?? player.statistics.win,
       lose: data.lose ?? player.statistics.lose,
+      mapCount: data.mapCount ?? player.statistics.mapCount,
       place: data.place ?? player.statistics.place,
       mvp: data.mvp ?? player.statistics.mvp,
+      maps: data.maps ?? player.statistics.maps,
     };
 
-    const WINRATE = currentStats.win / currentStats.mapCount;
+    const WINRATE = current.mapCount > 0 ? current.win / current.mapCount : 0;
     const KD =
-      currentStats.deaths > 0
-        ? currentStats.kills / currentStats.deaths
-        : currentStats.kills;
+      current.deaths > 0 ? current.kills / current.deaths : current.kills;
     const KDA =
-      currentStats.deaths > 0
-        ? (currentStats.kills + currentStats.assists) / currentStats.deaths
-        : currentStats.kills + currentStats.assists;
+      current.deaths > 0
+        ? (current.kills + current.assists) / current.deaths
+        : current.kills + current.assists;
     const svidRating =
-      KD + WINRATE * 0.2 + currentStats.mvp * 0.05 - currentStats.place * 0.02;
+      KD + WINRATE * 0.2 + current.mvp * 0.05 - current.place * 0.02;
 
-    return this.prisma.statistics.update({
+    return this.prisma.playerStatistics.update({
       where: { id: player.statistics.id },
       data: {
-        kills: currentStats.kills,
-        deaths: currentStats.deaths,
-        assists: currentStats.assists,
-        mapCount: currentStats.mapCount,
-        maps: currentStats.maps,
+        kills: current.kills,
+        deaths: current.deaths,
+        assists: current.assists,
+        win: current.win,
+        lose: current.lose,
+        mapCount: current.mapCount,
         kd: Number(KD.toFixed(2)),
         kda: Number(KDA.toFixed(2)),
         winrate: Number(WINRATE.toFixed(2)),
-        mvp: currentStats.mvp,
         svidRating: Number(svidRating.toFixed(2)),
-        win: currentStats.win,
-        lose: currentStats.lose,
-        place: currentStats.place,
+        place: current.place,
+        mvp: current.mvp,
+        maps: current.maps,
       },
     });
   }

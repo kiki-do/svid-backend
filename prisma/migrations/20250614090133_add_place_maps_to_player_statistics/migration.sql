@@ -1,0 +1,4 @@
+-- AlterTable
+ALTER TABLE "PlayerStatistics" ADD COLUMN     "maps" TEXT[] DEFAULT ARRAY[]::TEXT[],
+ADD COLUMN     "mvp" INTEGER NOT NULL DEFAULT 0,
+ADD COLUMN     "place" INTEGER NOT NULL DEFAULT 0;
